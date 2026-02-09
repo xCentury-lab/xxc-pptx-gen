@@ -109,16 +109,18 @@ libreoffice --headless --convert-to pdf --outdir /tmp/pptx-qa "$OUTPUT_PATH"
 pdftoppm -png -r 200 "/tmp/pptx-qa/$(basename "$OUTPUT_PATH" .pptx).pdf" /tmp/pptx-qa/slide
 ```
 
-2. **Visual QA**: Launch parallel Task agents (one per slide image) to evaluate:
-   - Text readability (contrast, size, overflow)
+2. **Visual QA**: Read each slide PNG directly in the main context using the `Read` tool (which supports image viewing). Do NOT use background Task agents for this step — background agents cannot inherit interactive file-read permissions and will fail with "auto-denied" errors. Instead, read all slide images directly (batch 6 at a time with parallel Read calls) and evaluate each slide for:
+   - Text readability (contrast, size, overflow, truncation)
    - Layout balance and alignment
    - Color consistency with theme
    - Information density (not too crowded, not too sparse)
-   - Icon appropriateness
+   - Icon visibility and appropriateness (circle fallbacks are acceptable)
 
-3. **Fix & Regenerate**: If issues are found, modify the generation script and re-run. Repeat until all slides pass QA.
+   Produce a QA summary table with PASS/FAIL per slide.
 
-4. **Clean up**: Remove temporary PDF/PNG files after QA completes.
+3. **Fix & Regenerate**: If any slide receives FAIL, modify the generation script to fix the specific issues, re-run, re-convert, and re-evaluate only the failed slides. Repeat until all slides pass.
+
+4. **Clean up**: Remove temporary PDF/PNG files (`rm -rf /tmp/pptx-qa`) after QA completes.
 
 ## Icon Selection Guide
 
